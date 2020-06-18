@@ -21,6 +21,8 @@ module.exports = {
         const exists = await User.findOne({email: userInput.email});
         if(exists){
             const error = new Error('User exists already!');
+            error.data = errors;
+            error.code = 422;
             throw error;
         }
         const hashedPw = await bcrypt.hash(userInput.password, 12);
