@@ -2,6 +2,7 @@ const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
+const Post = require('../models/post')
 
 module.exports = {
     createUser: async function({userInput}, req){
@@ -17,6 +18,8 @@ module.exports = {
         }
         if(errors.length>0){
             const error = new Error('Invalid input');
+            error.data = errors;
+            error.code = 422;
             throw error;
         }
         const exists = await User.findOne({email: userInput.email});
@@ -57,5 +60,36 @@ module.exports = {
         });
 
         return {token, userId: user._id.toString()};
+    },
+    async createPost({postInput}, req){
+        const errors = [];
+        if(validator.isEmpty(postInput.title) || !validator.isLength(postInput.title, {min:5})){
+            errors.push({
+                message: 'Title is invalid'
+            });
+        }
+        if(validator.isEmpty(postInput.content) || !validator.isLength(postInput.content, {min:5})){
+            errors.push({
+                message: 'Content is invalid'
+            });
+        }
+        if(errors.length>0){
+            const error = new Error('Invalid input');
+            error.data = errors;
+            error.code = 422;
+            throw error;
+        }
+        const post = new Post({
+            title: postInput.title,
+            content: postInput.content,
+            imageUrl: postInput.imageUrl
+        });
+        const createdPost = await post.save();
+        return {
+            ...createdPost,
+            _id: createdPost._id.toString(), 
+            createdAt: createdPost.createdAt.toISOString(),
+            updatedAt: createdPost.updatedAt.toISOString()
+        }
     }
 }
