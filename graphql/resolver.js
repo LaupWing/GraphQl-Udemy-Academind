@@ -2,7 +2,8 @@ const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
-const Post = require('../models/post')
+const Post = require('../models/post');
+const post = require('../models/post');
 
 module.exports = {
     createUser: async function({userInput}, req){
@@ -132,5 +133,24 @@ module.exports = {
                 updatedAt: x.updatedAt.toISOString(),
             }
             )), totalPosts};
+    },
+    async post({id}, req){
+        if(!req.isAuth){
+            const error = new Error('Not Authenitcated');
+            error.code = 401;
+            throw error;
+        }
+        const post = await (await Post.findById(id)).populated('creator');
+        if(!post){
+            const error = new Error('Post not found');
+            error.code = 404;
+            throw error;
+        }
+        return {
+            ...post._doc,
+            _id: post._id.toString(),
+            createdAt: post.createdAt.toISOString(),
+            updatedAt: post.updatedAt.toISOString(),
+        }
     }
 }
